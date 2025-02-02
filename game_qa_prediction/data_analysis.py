@@ -48,3 +48,34 @@ X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, 
 print("Data prepared for machine learning.")
 print(f"Training set size: {X_train.shape[0]}")
 print(f"Testing set size: {X_test.shape[0]}")
+
+# New section for building and evaluating the model
+print("\nBuilding and evaluating the Linear Regression model:")
+
+# Initialize and train the model
+model = LinearRegression()
+model.fit(X_train, y_train)
+
+# Make predictions on the test set
+y_pred = model.predict(X_test)
+
+# Evaluate the model
+mse = mean_squared_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+print(f"Mean Squared Error: {mse}")
+print(f"R-squared Score: {r2}")
+
+# Visualize predictions vs actual
+plt.figure(figsize=(10, 6))
+plt.scatter(y_test, y_pred, color='blue')
+plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'r--', lw=2)
+plt.xlabel('Actual QA Cost')
+plt.ylabel('Predicted QA Cost')
+plt.title('Actual vs Predicted QA Costs')
+plt.show()
+
+# Feature importance (coefficients)
+feature_importance = pd.DataFrame({'feature': X.columns, 'importance': abs(model.coef_)})
+feature_importance = feature_importance.sort_values('importance', ascending=False)
+print("\nFeature Importance:")
+print(feature_importance)

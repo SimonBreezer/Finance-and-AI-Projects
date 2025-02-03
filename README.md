@@ -6,7 +6,7 @@ Welcome to my GitHub. I'm preparing for the new era, and I need to adapt. Welcom
 
 - **Background**: Finance and Strategy
 - **Interests**: AI, Machine Learning, Financial Modeling, Gaming Industry
-- **Goal**: To work at xAI by building a strong portfolio of projects and showing I can learn anything
+- **Goal**: To build a strong portfolio of projects and showing the value I can add
 
 ## Projects
 

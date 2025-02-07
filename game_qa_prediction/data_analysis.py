@@ -5,6 +5,19 @@ from data_collection import generate_game_data
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+
+# New function for visualizing feature importance
+def visualize_feature_importance(feature_importance):
+    plt.figure(figsize=(12, 8))
+    plt.bar(feature_importance['feature'], feature_importance['importance'])
+    plt.title('Feature Importance in Predicting QA Costs')
+    plt.xlabel('Game Attributes')
+    plt.ylabel('Importance (Absolute Coefficient Value)')
+    plt.xticks(rotation=45, ha='right')
+    plt.tight_layout()
+    plt.show()
 
 # Generate game data
 game_data = generate_game_data(100)  # Let's use more data for better analysis
@@ -79,3 +92,6 @@ feature_importance = pd.DataFrame({'feature': X.columns, 'importance': abs(model
 feature_importance = feature_importance.sort_values('importance', ascending=False)
 print("\nFeature Importance:")
 print(feature_importance)
+
+# Call the visualization function
+visualize_feature_importance(feature_importance)

@@ -97,11 +97,12 @@ print(feature_importance)
 visualize_feature_importance(feature_importance)
 
 def predict_qa_cost(quests, levels, characters, items, hours_of_gameplay, dialogue_lines, cutscenes, multiplayer):
-    # Create a list with the input in the same order as the features in X
-    new_game_features = [[quests, levels, characters, items, hours_of_gameplay, dialogue_lines, cutscenes, int(multiplayer)]]
+    # Create a DataFrame with the input and assign column names
+    new_game_df = pd.DataFrame([[quests, levels, characters, items, hours_of_gameplay, dialogue_lines, cutscenes, int(multiplayer)]],
+                               columns=X.columns)  # Ensure feature names match
     
     # Scale the features using the same scaler we used for training data
-    new_game_scaled = scaler.transform(new_game_features)
+    new_game_scaled = scaler.transform(new_game_df)
     
     # Predict the QA cost
     predicted_qa_cost = model.predict(new_game_scaled)

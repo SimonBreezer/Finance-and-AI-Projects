@@ -112,6 +112,6 @@ def predict_qa_cost(quests, levels, characters, items, hours_of_gameplay, dialog
 # Example usage
 # Let's say we want to predict for a game with:
 # 50 quests, 20 levels, 150 characters, 300 items, 50 hours of gameplay, 2000 dialogue lines, 15 cutscenes, and it's multiplayer
-example_game_cost = predict_qa_cost(50, 20, 150, 300, 50, 2000, 15, True)
-print(f"Predicted QA Cost for the example game: ${example_game_cost:.2f}")
+specific_game_cost = predict_qa_cost(50, 20, 150, 300, 50, 2000, 15, True)
+print(f"Predicted QA Cost for the example game: ${specific_game_cost:.2f}")
 # You can now call this function with any set of game variables you want to predict for

@@ -95,3 +95,23 @@ print(feature_importance)
 
 # Call the visualization function
 visualize_feature_importance(feature_importance)
+
+def predict_qa_cost(quests, levels, characters, items, hours_of_gameplay, dialogue_lines, cutscenes, multiplayer):
+    # Create a list with the input in the same order as the features in X
+    new_game_features = [[quests, levels, characters, items, hours_of_gameplay, dialogue_lines, cutscenes, int(multiplayer)]]
+    
+    # Scale the features using the same scaler we used for training data
+    new_game_scaled = scaler.transform(new_game_features)
+    
+    # Predict the QA cost
+    predicted_qa_cost = model.predict(new_game_scaled)
+    
+    # Since the prediction is an array, we return the first (and only) element
+    return predicted_qa_cost[0]
+
+# Example usage
+# Let's say we want to predict for a game with:
+# 50 quests, 20 levels, 150 characters, 300 items, 50 hours of gameplay, 2000 dialogue lines, 15 cutscenes, and it's multiplayer
+example_game_cost = predict_qa_cost(50, 20, 150, 300, 50, 2000, 15, True)
+print(f"Predicted QA Cost for the example game: ${example_game_cost:.2f}")
+# You can now call this function with any set of game variables you want to predict for

@@ -18,10 +18,18 @@ df.columns = df.iloc[0]  # Assign first row as column names
 df = df[1:]  # Remove the first row (now redundant)
 df.reset_index(drop=True, inplace=True)
 
-# Convert Dates to Months-to-Alpha, Months-to-Beta, etc.
+# ✅ Convert date columns to datetime format
+date_columns = ['Alpha_WSR', 'Beta_WSR', 'FormatQASubmission_WSR', 'ORIG_DATE']
+for col in date_columns:
+    df[col] = pd.to_datetime(df[col], errors='coerce')  # Convert to datetime, set invalid to NaT
+
+# Function to calculate months between dates
 def elapsed_months(end_date, start_date):
+    if pd.isna(end_date) or pd.isna(start_date):  # Handle missing values
+        return np.nan
     return (end_date.year - start_date.year) * 12 + (end_date.month - start_date.month)
 
+# ✅ Apply function safely
 df['MONTHS_TO_ALPHA'] = df.apply(lambda row: elapsed_months(row['Alpha_WSR'], row['ORIG_DATE']), axis=1)
 df['MONTHS_TO_BETA'] = df.apply(lambda row: elapsed_months(row['Beta_WSR'], row['ORIG_DATE']), axis=1)
 df['MONTHS_TO_QASUBMISSION'] = df.apply(lambda row: elapsed_months(row['FormatQASubmission_WSR'], row['ORIG_DATE']), axis=1)

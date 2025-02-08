@@ -15,8 +15,8 @@ df = domo.read_dataframe('QA ML Prediction Data', query='SELECT * FROM table', n
 
 # Data Cleaning and Conditioning
 # Removing non-full cycle titles
-clean_df['remove'] = clean_df['TITLENAME'].isin(["DRIVECLUB", "BEYOND: Two Souls PS4"]).astype(int)
-clean_df = clean_df[clean_df['remove'] == 0]
+df['remove'] = df['TITLENAME'].isin(["DRIVECLUB", "BEYOND: Two Souls PS4"]).astype(int)
+df = df[df['remove'] == 0]
 
 # Convert Dates to datetime which is easy to work with in Python
 date_columns = ['Alpha_WSR', 'Beta_WSR', 'FormatQASubmission_WSR', 'ORIG_DATE']

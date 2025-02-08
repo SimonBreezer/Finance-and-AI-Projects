@@ -8,9 +8,10 @@ from xgboost import XGBRegressor
 from sklearn.metrics import mean_squared_error
 import matplotlib.pyplot as plt
 import seaborn as sns
+import domojupyter as domo
 
-# Load the data
-clean_df = pd.read_csv("Cleaned_Titles_Csv.csv", na_values=["", "NA", "#N/A"])
+# Load dataset from Domo with handling for NA values
+df = domo.read_dataframe('QA ML Prediction Data', query='SELECT * FROM table', na_values=["", "NA", "#N/A"])
 
 # Data Cleaning and Conditioning
 # Removing non-full cycle titles

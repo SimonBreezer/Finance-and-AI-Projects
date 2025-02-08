@@ -8,9 +8,15 @@ from sklearn.ensemble import RandomForestRegressor
 from xgboost import XGBRegressor
 from sklearn.metrics import mean_squared_error, r2_score
 import shap
+import domojupyter as domo
 
-# Load dataset
-df = pd.read_excel("sample data test.xlsx")
+# Load dataset from Domo
+df = domo.read_dataframe('QA ML Prediction Data', query='SELECT * FROM table')
+
+# Set the first row as column headers
+df.columns = df.iloc[0]  # Assign first row as column names
+df = df[1:]  # Remove the first row (now redundant)
+df.reset_index(drop=True, inplace=True)
 
 # Convert Dates to Months-to-Alpha, Months-to-Beta, etc.
 def elapsed_months(end_date, start_date):
@@ -64,3 +70,4 @@ print(f"R-squared Score: {r2}")
 explainer = shap.Explainer(xgb_model, X_train_scaled)
 shap_values = explainer(X_test_scaled)
 shap.summary_plot(shap_values, X_test)
+

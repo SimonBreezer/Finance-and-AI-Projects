@@ -9,6 +9,7 @@ from xgboost import XGBRegressor
 from sklearn.metrics import mean_squared_error, r2_score
 import shap
 import os
+import domojupyter as domo
 
 # Load dataset from Domo
 df = domo.read_dataframe('QA ML Prediction Data', query='SELECT * FROM table')

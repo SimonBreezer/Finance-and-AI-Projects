@@ -48,7 +48,7 @@ tot_func_hrs = func_df.groupby(['TITLENAME', 'PLATFORM', 'GENRE', 'STUDIO', 'FIR
          POST_REL_HRS=('HOURS', lambda x: x[df['is_POST_RELEASE'] == 1].sum()))
 
 # Encode categorical variables
-ohe = OneHotEncoder(sparse=False, drop='first')
+ohe = OneHotEncoder(sparse_output=False, drop='first')
 categorical_cols = ['PLATFORM', 'STUDIO', 'GENRE', 'Size']
 ohe_data = pd.DataFrame(ohe.fit_transform(df[categorical_cols]))
 ohe_data.columns = ohe.get_feature_names_out(categorical_cols)

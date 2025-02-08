@@ -8,38 +8,43 @@ from sklearn.ensemble import RandomForestRegressor
 from xgboost import XGBRegressor
 from sklearn.metrics import mean_squared_error, r2_score
 import shap
-import domojupyter as domo
+import os
 
 # Load dataset from Domo
 df = domo.read_dataframe('QA ML Prediction Data', query='SELECT * FROM table')
 
-# Set the first row as column headers
-df.columns = df.iloc[0]  # Assign first row as column names
-df = df[1:]  # Remove the first row (now redundant)
-df.reset_index(drop=True, inplace=True)
+# Remove non-full cycle Titles
+df = df[~df['TITLENAME'].isin(["DRIVECLUB", "BEYOND: Two Souls PS4"])]
 
-# ✅ Convert date columns to datetime format
-date_columns = ['Alpha_WSR', 'Beta_WSR', 'FormatQASubmission_WSR', 'ORIG_DATE']
-for col in date_columns:
-    df[col] = pd.to_datetime(df[col], errors='coerce')  # Convert to datetime, set invalid to NaT
+# Convert Dates to datetime format
+date_cols = ['Alpha_WSR', 'Beta_WSR', 'FormatQASubmission_WSR', 'ORIG_DATE']
+for col in date_cols:
+    df[col] = pd.to_datetime(df[col], errors='coerce')
 
 # Function to calculate months between dates
 def elapsed_months(end_date, start_date):
-    if pd.isna(end_date) or pd.isna(start_date):  # Handle missing values
+    if pd.isna(end_date) or pd.isna(start_date):
         return np.nan
     return (end_date.year - start_date.year) * 12 + (end_date.month - start_date.month)
 
-# ✅ Apply function safely
+# Apply function
 df['MONTHS_TO_ALPHA'] = df.apply(lambda row: elapsed_months(row['Alpha_WSR'], row['ORIG_DATE']), axis=1)
 df['MONTHS_TO_BETA'] = df.apply(lambda row: elapsed_months(row['Beta_WSR'], row['ORIG_DATE']), axis=1)
 df['MONTHS_TO_QASUBMISSION'] = df.apply(lambda row: elapsed_months(row['FormatQASubmission_WSR'], row['ORIG_DATE']), axis=1)
 
-# Drop original date columns
-df.drop(columns=['Alpha_WSR', 'Beta_WSR', 'FormatQASubmission_WSR', 'ORIG_DATE'], inplace=True)
+# Split the dataframe into Functional and Localization dataframes
+func_df = df[df['DEPARTMENT_C'] == "FUNCTIONALITY"]
+loc_df = df[df['DEPARTMENT_C'] == "LOCALISATION"]
 
-# Handle missing values (impute with mean for numerical columns)
-numeric_cols = ['OST_wordcount', 'VO_wordcount', 'Total_wordcount', 'Languages', 'Playthrough_time']
-df[numeric_cols] = df[numeric_cols].fillna(df[numeric_cols].mean())
+# Aggregate functionality data
+tot_func_hrs = func_df.groupby(['TITLENAME', 'PLATFORM', 'GENRE', 'STUDIO', 'FIRST_RELEASE_DATE', 'FIRST_RELEASE_YEAR',
+                                'FIRST_RELEASE_MONTH', 'VR', 'MULTI_PLATFORM', 'Genre_eedar', 'Gameplay_area_eedar',
+                                'Online_eedar', 'Multiplayer_eedar', 'Combat_speed_eedar', 'Sequel', 'Game_Origin_US', 'Size']) \
+    .agg(MAX_MTH_TO_REL=('MONTHS_TO_RELEASE', 'max'),
+         MAX_DAYS_TO_REL=('DAYS_TO_RELEASE', 'max'),
+         FUNC_TOT_HRS=('HOURS', 'sum'),
+         PRE_REL_HRS=('HOURS', lambda x: x[df['is_POST_RELEASE'] == 0].sum()),
+         POST_REL_HRS=('HOURS', lambda x: x[df['is_POST_RELEASE'] == 1].sum()))
 
 # Encode categorical variables
 ohe = OneHotEncoder(sparse=False, drop='first')
@@ -78,4 +83,3 @@ print(f"R-squared Score: {r2}")
 explainer = shap.Explainer(xgb_model, X_train_scaled)
 shap_values = explainer(X_test_scaled)
 shap.summary_plot(shap_values, X_test)
-

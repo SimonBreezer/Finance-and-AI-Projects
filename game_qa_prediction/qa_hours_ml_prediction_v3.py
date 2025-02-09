@@ -6,7 +6,9 @@ from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import LabelEncoder
 from xgboost import XGBRegressor
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.linear_model import LinearRegression
+from sklearn.ensemble import RandomForestRegressor
 from sklearn.impute import SimpleImputer
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -79,3 +81,45 @@ plt.show()
 
 # Print correlation with HOURS for easier inspection
 print(correlation_matrix['HOURS'].sort_values(ascending=False))
+
+# Features to keep based on correlation (considering both positive and negative values)
+selected_features = ['FIRST_RELEASE_YEAR', 'FormatQASubmission_WSR', 'Sequel', 'Beta_WSR', 'Alpha_WSR', 'Environment', 'Combat_speed_eedar', 'DAYS_TO_RELEASE', 'MONTHS_TO_RELEASE', 'MULTI_PLATFORM', 'GENRE', 'Online_eedar', 'Genre_eedar', 'Multiplayer', 'PORTED', 'Multiplayer_eedar', 'is_POST_RELEASE', 'PRIMARYSTATUS', 'is_VR', 'FIRST_RELEASE_MONTH', 'VR', 'PLATFORM', 'Gameplay_area_eedar', 'Size']
+
+# Create features and target sets
+X = grouped_df[selected_features]
+y = grouped_df['HOURS']
+
+print("Features shape:", X.shape)
+print("Target shape:", y.shape)
+
+# Identify categorical columns
+categorical_features = X.select_dtypes(include=['int64']).columns  # Assuming all encoded features are now integers
+
+# Column transformer to apply OneHotEncoder to categorical features
+preprocessor = ColumnTransformer(
+    transformers=[
+        ('cat', OneHotEncoder(drop='first', sparse=False, handle_unknown='ignore'), categorical_features)
+    ], remainder='passthrough')
+
+# Fit and transform the data
+X_encoded = preprocessor.fit_transform(X)
+
+X_train, X_test, y_train, y_test = train_test_split(X_encoded, y, test_size=0.2, random_state=42)
+
+# Example with Linear Regression
+model_lr = LinearRegression()
+model_lr.fit(X_train, y_train)
+y_pred_lr = model_lr.predict(X_test)
+
+# Example with Random Forest
+model_rf = RandomForestRegressor(n_estimators=100, random_state=42)
+model_rf.fit(X_train, y_train)
+y_pred_rf = model_rf.predict(X_test)
+
+# Evaluate Linear Regression
+print("Linear Regression - MSE:", mean_squared_error(y_test, y_pred_lr))
+print("Linear Regression - R2 Score:", r2_score(y_test, y_pred_lr))
+
+# Evaluate Random Forest
+print("Random Forest - MSE:", mean_squared_error(y_test, y_pred_rf))
+print("Random Forest - R2 Score:", r2_score(y_test, y_pred_rf))

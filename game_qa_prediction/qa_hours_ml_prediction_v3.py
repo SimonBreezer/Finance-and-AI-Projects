@@ -4,6 +4,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import LabelEncoder
 from xgboost import XGBRegressor
 from sklearn.metrics import mean_squared_error
 from sklearn.impute import SimpleImputer
@@ -53,3 +54,21 @@ grouped_df = df_cleaned.groupby(['TITLENAME', 'GENRE', 'PLATFORM', 'STUDIO', 'Si
 
 # Now, 'HOURS' represents the total QA hours per unique combination of these features
 print(grouped_df.head())
+
+# Encode categorical variables for correlation analysis
+for column in grouped_df.select_dtypes(include=['object']).columns:
+    if column != 'TITLENAME':  # We don't need to encode the game title for correlation
+        le = LabelEncoder()
+        grouped_df[column] = le.fit_transform(grouped_df[column])
+
+# Compute correlation matrix
+correlation_matrix = grouped_df.corr()
+
+# Visualize the correlation matrix
+plt.figure(figsize=(20, 18))  # Increase size due to more features
+sns.heatmap(correlation_matrix, annot=False, cmap='coolwarm', linewidths=0.5)
+plt.title('Correlation Matrix of All Features with Total QA Hours')
+plt.show()
+
+# Print correlation with HOURS for easier inspection
+print(correlation_matrix['HOURS'].sort_values(ascending=False))

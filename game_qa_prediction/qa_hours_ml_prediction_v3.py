@@ -55,14 +55,21 @@ grouped_df = df_cleaned.groupby(['TITLENAME', 'GENRE', 'PLATFORM', 'STUDIO', 'Si
 # Now, 'HOURS' represents the total QA hours per unique combination of these features
 print(grouped_df.head())
 
-# Encode categorical variables for correlation analysis
-for column in grouped_df.select_dtypes(include=['object']).columns:
-    if column != 'TITLENAME':  # We don't need to encode the game title for correlation
-        le = LabelEncoder()
-        grouped_df[column] = le.fit_transform(grouped_df[column])
+# Exclude 'TITLENAME' from correlation analysis
+columns_for_correlation = grouped_df.columns.drop('TITLENAME')
 
-# Compute correlation matrix
-correlation_matrix = grouped_df.corr()
+# Encode categorical variables for correlation analysis
+for column in columns_for_correlation:
+    if grouped_df[column].dtype == 'object':  # Check if it's still a string
+        le = LabelEncoder()
+        try:
+            grouped_df[column] = le.fit_transform(grouped_df[column])
+        except:
+            print(f"Error encoding column: {column}. Skipping this column.")
+            columns_for_correlation = columns_for_correlation.drop(column)
+            
+# Compute correlation matrix with only the relevant columns
+correlation_matrix = grouped_df[columns_for_correlation].corr()
 
 # Visualize the correlation matrix
 plt.figure(figsize=(20, 18))  # Increase size due to more features

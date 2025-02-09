@@ -98,7 +98,7 @@ categorical_features = X.select_dtypes(include=['int64']).columns  # Assuming al
 # Column transformer to apply OneHotEncoder to categorical features
 preprocessor = ColumnTransformer(
     transformers=[
-        ('cat', OneHotEncoder(drop='first', sparse=False, handle_unknown='ignore'), categorical_features)
+        ('cat', OneHotEncoder(drop='first', handle_unknown='ignore'), categorical_features)
     ], remainder='passthrough')
 
 # Fit and transform the data

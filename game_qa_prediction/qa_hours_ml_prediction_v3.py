@@ -6,6 +6,7 @@ from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from xgboost import XGBRegressor
 from sklearn.metrics import mean_squared_error
+from sklearn.impute import SimpleImputer
 import matplotlib.pyplot as plt
 import seaborn as sns
 import domojupyter as domo
@@ -38,5 +39,11 @@ df_cleaned = df[cols_to_keep]
 print("Columns kept:", cols_to_keep)
 print("Number of rows after cleaning:", len(df_cleaned))
 
-# Check for any remaining missing values in the kept columns
+# Impute missing values for categorical columns
+categorical_imputer = SimpleImputer(strategy='most_frequent')  # Use mode for categorical data
+df_cleaned['PRIMARYSTATUS'] = categorical_imputer.fit_transform(df_cleaned[['PRIMARYSTATUS']]).ravel()
+df_cleaned['TO_CHAR(A.ACTIVITY)'] = categorical_imputer.fit_transform(df_cleaned[['TO_CHAR(A.ACTIVITY)']]).ravel()
+df_cleaned['Environment'] = categorical_imputer.fit_transform(df_cleaned[['Environment']]).ravel()
+
+# Check if there are any remaining missing values
 print(df_cleaned.isnull().sum())

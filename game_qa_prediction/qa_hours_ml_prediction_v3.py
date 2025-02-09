@@ -47,3 +47,9 @@ df_cleaned['Environment'] = categorical_imputer.fit_transform(df_cleaned[['Envir
 
 # Check if there are any remaining missing values
 print(df_cleaned.isnull().sum())
+
+# Group by a broader set of features
+grouped_df = df_cleaned.groupby(['TITLENAME', 'GENRE', 'PLATFORM', 'STUDIO', 'Size', 'Multiplayer', 'VR', 'MONTHS_TO_RELEASE', 'DAYS_TO_RELEASE', 'is_POST_RELEASE', 'DEPARTMENT', 'PRIMARYSTATUS', 'RECORDTYPE', 'TO_CHAR(A.ACTIVITY)', 'BILLABLE', 'HOURTYPE', 'DEPARTMENT_C', 'is_VR', 'is_emuPS2', 'FIRST_RELEASE_YEAR', 'FIRST_RELEASE_MONTH', 'MULTI_PLATFORM', 'is_PORTED', 'PORTED', 'Genre_eedar', 'Gameplay_area_eedar', 'Online_eedar', 'Multiplayer_eedar', 'Combat_speed_eedar', 'Environment', 'Sequel', 'Game_Origin_US', 'Alpha_WSR', 'Beta_WSR', 'FormatQASubmission_WSR'])['HOURS'].sum().reset_index()
+
+# Now, 'HOURS' represents the total QA hours per unique combination of these features
+print(grouped_df.head())

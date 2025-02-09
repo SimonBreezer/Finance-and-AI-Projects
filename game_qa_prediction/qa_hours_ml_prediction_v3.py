@@ -22,14 +22,21 @@ print(df.info())
 # Check for missing values
 print(df.isnull().sum())
 
-# Drop the column with all missing data
-df = df.drop(columns=['LOC_LANGUAGE'])
+# Define the threshold for missing data
+threshold = 0.8  # 80% of data should be present
 
-# Drop rows where any value is missing
-df_cleaned = df.dropna()
+# Calculate the percentage of non-null values for each column
+non_null_ratio = df.notnull().sum() / len(df)
 
-# Check the number of rows after cleaning
+# Select columns where the non-null ratio is above or equal to the threshold
+cols_to_keep = non_null_ratio[non_null_ratio >= threshold].index.tolist()
+
+# Subset your DataFrame with only these columns
+df_cleaned = df[cols_to_keep]
+
+# Print out the columns we're keeping and the number of rows
+print("Columns kept:", cols_to_keep)
 print("Number of rows after cleaning:", len(df_cleaned))
 
-# Check if there are still missing values
+# Check for any remaining missing values in the kept columns
 print(df_cleaned.isnull().sum())

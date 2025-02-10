@@ -52,12 +52,6 @@ grouped_func_df = func_df.groupby(['TITLENAME', 'GENRE', 'PLATFORM', 'STUDIO', '
 # Group by a broader set of features for Localization
 grouped_loc_df = loc_df.groupby(['TITLENAME', 'GENRE', 'PLATFORM', 'STUDIO', 'Size', 'Multiplayer', 'VR', 'FIRST_RELEASE_YEAR', 'FIRST_RELEASE_MONTH', 'MULTI_PLATFORM', 'Genre_eedar', 'Gameplay_area_eedar', 'Online_eedar', 'Multiplayer_eedar', 'Combat_speed_eedar', 'Environment', 'Sequel', 'Game_Origin_US'])['HOURS'].sum().reset_index()
 
-# Now, 'HOURS' represents the total QA hours per unique combination of these features for each department
-print("Functionality Grouped Data:")
-print(grouped_func_df.head())
-print("\nLocalization Grouped Data:")
-print(grouped_loc_df.head())
-
 # Define features for ML analysis
 selected_features = ['GENRE', 'PLATFORM', 'STUDIO', 'Size', 'Multiplayer', 'VR', 'FIRST_RELEASE_YEAR', 'FIRST_RELEASE_MONTH', 'MULTI_PLATFORM', 'Genre_eedar', 'Gameplay_area_eedar', 'Online_eedar', 'Multiplayer_eedar', 'Combat_speed_eedar', 'Environment', 'Sequel', 'Game_Origin_US']
 
@@ -67,9 +61,9 @@ def perform_ml_analysis(df, name):
     y = df['HOURS']
     
     # Encode categorical variables
+    le = LabelEncoder()
     for column in X.columns:
         if X[column].dtype == 'object':
-            le = LabelEncoder()
             X[column] = le.fit_transform(X[column].astype(str))
     
     # Standardize the features
@@ -144,11 +138,39 @@ def perform_ml_analysis(df, name):
     print(f"\n{name} - Feature Importances:")
     print(feature_importance)
     
+    # Return the necessary variables for visualization
+    return y_test, y_pred_lr, y_pred_rf, y_pred_xgb
+    
 # Perform analysis for Functionality
-perform_ml_analysis(grouped_func_df, "Functionality")
+y_test_func, y_pred_lr_func, y_pred_rf_func, y_pred_xgb_func = perform_ml_analysis(grouped_func_df, "Functionality")
+print("Functionality Analysis Results:")
+print("y_test_func shape:", y_test_func.shape)
+print("y_pred_lr_func shape:", y_pred_lr_func.shape)
+print("y_pred_rf_func shape:", y_pred_rf_func.shape)
+print("y_pred_xgb_func shape:", y_pred_xgb_func.shape)
 
 # Perform analysis for Localization
-perform_ml_analysis(grouped_loc_df, "Localization")
+y_test_loc, y_pred_lr_loc, y_pred_rf_loc, y_pred_xgb_loc = perform_ml_analysis(grouped_loc_df, "Localization")
+print("\nLocalization Analysis Results:")
+print("y_test_loc shape:", y_test_loc.shape)
+print("y_pred_lr_loc shape:", y_pred_lr_loc.shape)
+print("y_pred_rf_loc shape:", y_pred_rf_loc.shape)
+print("y_pred_xgb_loc shape:", y_pred_xgb_loc.shape)
+
+# Define visualization function before calling it
+def visualize_predictions(y_test, y_pred, model_name):
+    plt.figure(figsize=(10, 6))
+    plt.scatter(y_test, y_pred, alpha=0.5)
+    plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'r--', lw=2)
+    plt.xlabel('Actual QA Hours')
+    plt.ylabel('Predicted QA Hours')
+    plt.title(f'Actual vs Predicted QA Hours ({model_name})')
+    plt.show()
+    
+# Now you can use these returned variables for visualization
+visualize_predictions(y_test_func, y_pred_lr_func, 'Linear Regression - Functionality')
+visualize_predictions(y_test_func, y_pred_rf_func, 'Random Forest - Functionality')
+visualize_predictions(y_test_func, y_pred_xgb_func, 'XGBoost - Functionality')
 
 # Before computing the correlation matrix, encode the categorical variables
 le = LabelEncoder()
@@ -169,39 +191,3 @@ plt.show()
 scatter_matrix = pd.plotting.scatter_matrix(grouped_func_df[selected_features + ['HOURS']], alpha=0.2, figsize=(20, 20), diagonal='hist')
 plt.suptitle('Scatter Plot Matrix of Features vs Functional QA Hours', fontsize=20, y=0.95)
 plt.show()
-
-def plot_boxplots(df, features, target):
-    n_features = len(features)
-    fig, axes = plt.subplots(nrows=(n_features // 2) + (n_features % 2), ncols=2, figsize=(20, 5 * n_features))
-    fig.suptitle('Box Plots of Categorical Features vs Functional QA Hours', fontsize=20)
-    for i, feature in enumerate(features):
-        if df[feature].dtype == 'object':
-            sns.boxplot(x=feature, y=target, data=df, ax=axes[i // 2, i % 2])
-            axes[i // 2, i % 2].set_title(f'{feature} vs {target}')
-            axes[i // 2, i % 2].set_xticklabels(axes[i // 2, i % 2].get_xticklabels(), rotation=45, ha='right')
-    plt.tight_layout()
-    plt.show()
-    
-# Example usage, you might want to select categorical features from selected_features
-categorical_features = ['GENRE', 'PLATFORM', 'STUDIO', 'Size', 'Environment', 'Game_Origin_US']
-plot_boxplots(grouped_func_df, categorical_features, 'HOURS')
-
-def visualize_predictions(y_test, y_pred, model_name):
-    plt.figure(figsize=(10, 6))
-    plt.scatter(y_test, y_pred, alpha=0.5)
-    plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'r--', lw=2)
-    plt.xlabel('Actual QA Hours')
-    plt.ylabel('Predicted QA Hours')
-    plt.title(f'Actual vs Predicted QA Hours ({model_name})')
-    plt.show()
-    
-# Assuming you've stored your predictions in these variables after running the analysis
-y_test_func = y_test  # From your function's output
-y_pred_lr_func = y_pred_lr
-y_pred_rf_func = y_pred_rf
-y_pred_xgb_func = y_pred_xgb  # Assuming XGBoost was added
-
-# Visualize for each model
-visualize_predictions(y_test_func, y_pred_lr_func, 'Linear Regression - Functionality')
-visualize_predictions(y_test_func, y_pred_rf_func, 'Random Forest - Functionality')
-visualize_predictions(y_test_func, y_pred_xgb_func, 'XGBoost - Functionality')

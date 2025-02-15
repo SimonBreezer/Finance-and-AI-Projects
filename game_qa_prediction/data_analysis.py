@@ -97,6 +97,17 @@ print(feature_importance)
 visualize_feature_importance(feature_importance)
 
 def predict_qa_cost(quests, levels, characters, items, hours_of_gameplay, dialogue_lines, cutscenes, multiplayer):
+
+    # Error checking
+    try:
+        # Ensure all inputs are non-negative for numerical values
+        if any(x < 0 for x in [quests, levels, characters, items, hours_of_gameplay, dialogue_lines, cutscenes]):
+            raise ValueError("All numerical inputs must be non-negative.")
+        
+        # Ensure multiplayer is a boolean
+        if not isinstance(multiplayer, bool):
+            raise TypeError("Multiplayer must be a boolean value (True/False).")
+            
     # Create a DataFrame with the input, matching the columns of X
     new_game_features = pd.DataFrame({
         'quests': [quests],
@@ -118,9 +129,21 @@ def predict_qa_cost(quests, levels, characters, items, hours_of_gameplay, dialog
     # Since the prediction is an array, we return the first (and only) element
     return predicted_qa_cost[0]
 
+except ValueError as ve:
+        print(f"ValueError: {ve}")
+        return None
+    except TypeError as te:
+        print(f"TypeError: {te}")
+        return None
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+        return None
+
 # Example usage
 # Let's say we want to predict for a game with:
 # 50 quests, 20 levels, 150 characters, 300 items, 50 hours of gameplay, 2000 dialogue lines, 15 cutscenes, and it's multiplayer
-specific_game_cost = predict_qa_cost(50, 20, 150, 300, 50, 2000, 15, True)
-print(f"Predicted QA Cost for the example game: ${specific_game_cost:.2f}")
-# You can now call this function with any set of game variables you want to predict for
+example_game_cost = predict_qa_cost(50, 20, 150, 300, 50, 2000, 15, True)
+if example_game_cost is not None:
+    print(f"Predicted QA Cost for the example game: ${example_game_cost:.2f}")
+else:
+    print("Prediction failed due to invalid input.")

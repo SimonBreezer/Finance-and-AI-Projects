@@ -1,0 +1,77 @@
+# ---------------------------------------------
+# Modeling Without Explicit Months_to_release Input
+# ---------------------------------------------
+
+# Objective: Let the model learn the temporal QA hours curve (over months) without user providing Months_to_release.
+
+# Updated Approach:
+# We will train the model with all inputs **excluding** Months_to_release.
+# But keep Months_to_release as a secondary dimension during training using grouping (per title).
+
+# Steps:
+# 1. Group the data by Title.
+# 2. Pivot the dataset into time-series form: rows = titles, columns = months relative to release.
+# 3. Train a multi-output regressor or fit a time series model (e.g., RandomForest per month).
+
+# Example pseudo-flow using RandomForest per month:
+import domojupyter as domo
+import pandas as pd
+from sklearn.preprocessing import LabelEncoder
+from sklearn.ensemble import RandomForestRegressor
+import joblib
+
+# Load the dataset
+df = domo.read_dataframe('GameQA_Predictor_v4-trimmed.xlsx', query='SELECT * FROM table')
+
+# Drop incomplete entries
+df = df.dropna(subset=[
+    'HOURS', 'Months_to_release', 'Classification', 'Primary Platform',
+    'Game Engine', 'Genre', 'Game World Scale', 'Gameplay Complexity',
+    'Multiplayer', 'Game Modes'
+])
+
+# Encode categorical inputs
+categorical_cols = [
+    'Classification', 'Primary Platform', 'Game Engine', 'Genre',
+    'Game World Scale', 'Gameplay Complexity', 'Multiplayer', 'Game Modes'
+]
+encoders = {}
+for col in categorical_cols:
+    le = LabelEncoder()
+    df[col] = le.fit_transform(df[col].astype(str))
+    encoders[col] = le
+
+# Separate static features
+feature_cols = categorical_cols
+X_base = df.groupby("Title")[feature_cols].first().reset_index()
+
+# Pivot HOURS by Months_to_release (e.g., -12 to +12)
+y = df.pivot_table(index="Title", columns="Months_to_release", values="HOURS")
+y = y.fillna(0)  # Optional: replace missing with 0 or interpolate
+
+# Align features with target
+df_merged = pd.merge(X_base, y, left_on="Title", right_index=True)
+
+X = df_merged[feature_cols]
+y = df_merged.drop(columns=["Title"] + feature_cols)
+
+# Train multi-output model
+model = RandomForestRegressor(n_estimators=100, random_state=42)
+model.fit(X, y)
+
+# Save model and encoders
+joblib.dump(model, "files/qa_curve_model.pkl")
+joblib.dump(encoders, "files/qa_curve_encoders.pkl")
+
+# Predict entire QA curve (no Months_to_release needed)
+def predict_full_curve(user_input_dict):
+    model = joblib.load("files/qa_curve_model.pkl")
+    encoders = joblib.load("files/qa_curve_encoders.pkl")
+
+    encoded_input = []
+    for col in categorical_cols:
+        encoded_val = encoders[col].transform([user_input_dict[col]])[0]
+        encoded_input.append(encoded_val)
+
+    prediction = model.predict([encoded_input])[0]
+    return prediction  # list of predicted QA hours for each month

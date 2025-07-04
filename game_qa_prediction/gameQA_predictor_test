@@ -1,0 +1,90 @@
+# ---------------------------------------------
+# Modeling Without Explicit Months_to_release Input (Manual Testing Version)
+# ---------------------------------------------
+
+# Objective: Let the model learn the temporal QA hours curve (over months) without user providing Months_to_release.
+
+import domojupyter as domo
+import pandas as pd
+from sklearn.preprocessing import LabelEncoder
+from sklearn.ensemble import RandomForestRegressor
+
+# Load the dataset
+df = domo.read_dataframe('GameQA_Predictor_v4-trimmed.xlsx', query='SELECT * FROM table')
+
+# Drop incomplete entries
+df = df.dropna(subset=[
+    'HOURS', 'Months_to_release', 'Classification', 'Primary Platform',
+    'Game Engine', 'Genre', 'Game World Scale', 'Gameplay Complexity',
+    'Multiplayer', 'Game Modes'
+])
+
+# Encode categorical inputs
+categorical_cols = [
+    'Classification', 'Primary Platform', 'Game Engine', 'Genre',
+    'Game World Scale', 'Gameplay Complexity', 'Multiplayer', 'Game Modes'
+]
+encoders = {}
+for col in categorical_cols:
+    le = LabelEncoder()
+    df[col] = le.fit_transform(df[col].astype(str))
+    encoders[col] = le
+
+# Separate static features
+feature_cols = categorical_cols
+X_base = df.groupby("Title")[feature_cols].first().reset_index()
+
+# Pivot HOURS by Months_to_release (e.g., -12 to +12)
+y = df.pivot_table(index="Title", columns="Months_to_release", values="HOURS")
+y = y.fillna(0)  # Optional: replace missing with 0 or interpolate
+
+# Align features with target
+df_merged = pd.merge(X_base, y, left_on="Title", right_index=True)
+
+X = df_merged[feature_cols]
+y = df_merged.drop(columns=["Title"] + feature_cols)
+
+# Train multi-output model
+model = RandomForestRegressor(n_estimators=100, random_state=42)
+model.fit(X, y)
+
+# Evaluate R2 score on training data (since no train/test split)
+y_pred = model.predict(X)
+r2 = r2_score(y, y_pred)
+print(f"R2 Score (training): {r2:.4f}")
+
+# Predict entire QA curve manually (no Months_to_release input)
+def predict_full_curve(user_input_dict):
+    encoded_input = []
+    for col in categorical_cols:
+        encoded_val = encoders[col].transform([user_input_dict[col]])[0]
+        encoded_input.append(encoded_val)
+
+    # Wrap encoded input as a DataFrame with feature names
+    input_df = pd.DataFrame([encoded_input], columns=categorical_cols)
+    prediction = model.predict(input_df)[0]
+    return prediction
+
+# Example manual test
+test_input = {
+    'Classification': 'AAA',
+    'Primary Platform': 'PS5',
+    'Game Engine': 'Insomniac Engine',
+    'Genre': 'Adventure',
+    'Game World Scale': 'Open-world',
+    'Gameplay Complexity': 'Medium',
+    'Multiplayer': 'No',
+    'Game Modes': 'Single-player'
+}
+
+predicted_curve = predict_full_curve(test_input)
+
+# Display results as a table
+months = list(y.columns)
+prediction_df = pd.DataFrame({
+    'Months_to_release': months,
+    'Predicted_QA_Hours': predicted_curve
+})
+
+pd.set_option('display.max_rows', None)
+print(prediction_df)
